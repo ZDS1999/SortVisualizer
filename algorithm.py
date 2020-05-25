@@ -1,4 +1,5 @@
 from globals import SortWith
+import globals
 from PySide2.QtCore import QThread, QObject, Signal
 
 INFINITY = 0x40000
@@ -39,7 +40,8 @@ class Sorter(QThread):
             self.heap_sort()
         else:
             print('should never come here: algorithm not exists')
-        self.sorted()
+        if globals.RET_FLAG == False:
+            self.sorted()
 
     def sorted(self):
         for index in range(self.amount):
@@ -58,6 +60,8 @@ class Sorter(QThread):
     def bubble_sort(self):
         for i in range(self.amount):
             for j in range(self.amount - 1 - i):
+                if globals.RET_FLAG == True:
+                    return
                 if self.cols[j] > self.cols[j+1]:
                     self.swap(j, j+1)
                 self.access_array()

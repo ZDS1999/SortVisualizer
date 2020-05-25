@@ -1,6 +1,7 @@
 from enum import Enum
 
 DEBUG = True
+RET_FLAG = False
 
 
 def dprint(content):

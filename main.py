@@ -1,6 +1,7 @@
 from form import Ui_Widget
 from algorithm import Sorter
-from globals import *
+from globals import dprint
+import globals
 from PySide2 import QtCore, QtWidgets, QtGui
 import sys
 import random
@@ -49,6 +50,10 @@ class Widget(QtWidgets.QWidget):
         self.show()
 
     def columns_setup(self):
+        # reset label
+        self.ui.labArrayAccesses.setText('0')
+        self.ui.labComparisons.setText('0')
+        self.comparisons = 0
         # reset columns
         self.scene.clear()
         self.col_heights.clear()
@@ -87,6 +92,7 @@ class Widget(QtWidgets.QWidget):
 
     def thread_update(self):
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
+        self.sorter.access_count = 0
         self.sorter.signals.sig_compare.connect(self.on_comparsion)
         self.sorter.signals.sig_sort_done.connect(self.sort_done)
         self.sorter.signals.sig_change_button_status.connect(self.sort_button_status)
@@ -153,18 +159,17 @@ class Widget(QtWidgets.QWidget):
             dprint('\tapp_state 0 → 1')
             self.sort_button_status(1)
             self.thread_update()
-            self.thread_update()
+            globals.RET_FLAG = False
             self.sorter.start()
-        # running -> finished (terminate)
+        # running -> finished
         elif self.app_state == 1:
             dprint('\tapp_state 1 → 2')
-            self.sorter.terminate()
+            globals.RET_FLAG = True
             self.sort_button_status(2)
         # finished -> ready to start
         elif self.app_state == 2:
             dprint('\tapp_state 2 → 0')
             self.scene.clear()
-            self.columns_setup()
             self.columns_setup()
             self.sort_button_status(0)
         else:
