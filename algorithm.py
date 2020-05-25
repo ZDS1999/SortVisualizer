@@ -1,19 +1,29 @@
 from globals import SortWith
-from PySide2.QtCore import QThread, QObject
+from PySide2.QtCore import QThread, QObject, Signal
 
 INFINITY = 0x40000
+
+
+class SorterSignals(QObject):
+    sig_compare = Signal(int, int)
+    sig_sort_done = Signal(int)
+    sig_array_access = Signal(int)
+    sig_change_button_status = Signal(int)
+
 
 class Sorter(QThread):
     def __init__(self, sort_with, ms, amount, col_heights):
         super().__init__()
-        self.sort_with  = sort_with
+        self.sort_with = sort_with
         self.sort_delay = ms
-        self.amount     = amount
-        self.cols       = col_heights
+        self.sort_done_delay = 2 if amount > 300 else 5
+        self.amount = amount
+        self.cols = col_heights
+        self.signals = SorterSignals()
+        self.access_count = 0
 
     def run(self):
-        print('...')
-        if self.sort_with   == SortWith.BUBBLE.value:
+        if self.sort_with == SortWith.BUBBLE.value:
             self.bubble_sort()
         elif self.sort_with == SortWith.SELECT.value:
             self.select_sort()
@@ -28,16 +38,29 @@ class Sorter(QThread):
         elif self.sort_with == SortWith.HEAP.value:
             self.heap_sort()
         else:
-            print('should never come here: alogrithm not exists')
+            print('should never come here: algorithm not exists')
+        self.sorted()
 
-    def swap(self, i, j):
-        self.cols[i], self.cols[j] = self.cols[j], self.cols[i]
+    def sorted(self):
+        for index in range(self.amount):
+            self.signals.sig_sort_done.emit(index)
+            self.msleep(self.sort_done_delay)
+        self.signals.sig_change_button_status.emit(2)
+
+    def swap(self, left, right):
+        self.cols[left], self.cols[right] = self.cols[right], self.cols[left]
+        self.signals.sig_compare.emit(left, right)
+
+    def access_array(self):
+        self.access_count += 1
+        self.signals.sig_array_access.emit(self.access_count)
 
     def bubble_sort(self):
         for i in range(self.amount):
             for j in range(self.amount - 1 - i):
                 if self.cols[j] > self.cols[j+1]:
                     self.swap(j, j+1)
+                self.access_array()
                 self.msleep(self.sort_delay)
 
     def select_sort(self):

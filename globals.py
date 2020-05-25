@@ -2,6 +2,12 @@ from enum import Enum
 
 DEBUG = True
 
+
+def dprint(content):
+    if DEBUG:
+        print(content)
+
+
 class SortWith(Enum):
     BUBBLE = 0
     SELECT = 1
