@@ -14,6 +14,7 @@ class Widget(QtWidgets.QWidget):
         self.ui.setupUi(self)
 
         # class variables
+            # view control
         self.scene = QtWidgets.QGraphicsScene(self)
         self.scene_height = self.ui.graphicsView.height()
         self.scene_width = self.ui.graphicsView.width()
@@ -24,6 +25,7 @@ class Widget(QtWidgets.QWidget):
         # (1)  - App sorting    (2) - App sorted
         self.app_state = -1
         self.comparisons = 0
+            # sort control
         self.col_amount = 100
         self.sort_delay = 0
         self.algorithm_key = 0
@@ -50,6 +52,15 @@ class Widget(QtWidgets.QWidget):
         self.show()
 
     def columns_setup(self):
+        '''
+        only works in three conditions:
+            1. starting app
+            2. spin amount
+            3. state 2 → 0, press btnSort when it's text is new sort
+        functions:
+            1. reset display labels and their correspoing class variables
+            2. reset scene and render it again with correspoing variables
+        '''
         # reset label
         self.ui.labArrayAccesses.setText('0')
         self.ui.labComparisons.setText('0')
@@ -91,6 +102,10 @@ class Widget(QtWidgets.QWidget):
             xpos += col_width
 
     def thread_update(self):
+        '''
+        only works when: state 0 → 1, press btnSort when it's content is sort
+        function: create a new thread and render it with current state
+        '''
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
         self.sorter.access_count = 0
         self.sorter.signals.sig_compare.connect(self.on_comparsion)
@@ -98,9 +113,50 @@ class Widget(QtWidgets.QWidget):
         self.sorter.signals.sig_change_button_status.connect(self.sort_button_status)
         self.sorter.signals.sig_array_access.connect(self.ui.labArrayAccesses.setNum)
 
+    @QtCore.Slot()
+    def list_clicked(self, item):
+        dprint('FUNCTION: list_clicked')
+        dprint('\ttext: {}'.format(item.text()))
+        dprint('\tapp_state = {}'.format(self.app_state))
+        # enter ready state when first clicked
+        if self.app_state == -1:
+            self.ui.btnSort.setEnabled(True)
+            self.ui.spinColAmount.setEnabled(True)
+            self.ui.spinDelay.setEnabled(True)
+
+            self.app_state = 0
+            self.sort_button_status(self.app_state)
+
+        # render labSortWith's text
+        if self.app_state == 0:
+            text = item.text()
+            dprint('\talgorithm {} → {}'.format(self.algorithm_key, self.algorithm_list[text]))
+            self.algorithm_key = self.algorithm_list[text]
+            self.ui.labSortWith.setText(text)
+
+    @QtCore.Slot()
+    def spinAmount_changed(self):
+        '''re render the scene'''
+        dprint('FUNCTION: spinAmount_changed')
+        if self.app_state == 0:
+            dprint('amount {} → {}'.format(self.col_amount, self.ui.spinColAmount.value()))
+            self.col_amount = self.ui.spinColAmount.value()
+            self.columns_setup()
+
+    @QtCore.Slot()
+    def spinDelay_changed(self):
+        '''re render the sorter(thread)'''
+        dprint('FUNCTION: spinDelay_changed')
+        if self.app_state == 0:
+            dprint('delay {} → {}'.format(self.sort_delay, self.ui.spinDelay.value()))
+            self.sort_delay = self.ui.spinDelay.value()
+
     def sort_button_status(self, state):
+        '''
+            transit to a new state and set labels and button
+        '''
         dprint('FUNCTION: sort_button_status')
-        dprint('\tstate = {}'.format(self.app_state))
+        dprint('\tstate {} → {}'.format(self.app_state, state))
         style = ''
         btn_text = ''
         if state == 0:
@@ -117,58 +173,36 @@ class Widget(QtWidgets.QWidget):
             btn_text = 'new sort'
             style = 'background-color: rgba(85,0,255,255); color: #fff'
         self.app_state = state
-        dprint('\tstate → {}'.format(self.app_state))
         self.ui.btnSort.setText(btn_text)
         self.ui.btnSort.setStyleSheet(style)
 
     @QtCore.Slot()
-    def list_clicked(self, item):
-        dprint('FUNCTION: list_clicked')
-        dprint('\ttext: {}'.format(item.text()))
-        dprint('\tapp_state = {}'.format(self.app_state))
-        if self.app_state == -1:
-            self.ui.btnSort.setEnabled(True)
-            self.ui.spinColAmount.setEnabled(True)
-            self.ui.spinDelay.setEnabled(True)
-
-            self.app_state = 0
-            self.sort_button_status(self.app_state)
-
-        if self.app_state == 0:
-            text = item.text()
-            algorithm_key = self.algorithm_list[text]
-            self.ui.labSortWith.setText(text)
-
-    @QtCore.Slot()
-    def spinAmount_changed(self):
-        if self.app_state == 0:
-            self.col_amount = self.ui.spinColAmount.value()
-            self.columns_setup()
-
-    def spinDelay_changed(self):
-        if self.app_state == 0:
-            self.sort_delay = self.ui.spinDelay.value()
-            self.thread_update()
-
-
     def btnSort_clicked(self):
+        '''
+            transit to a new state and control sort process
+        states
+            -1 → 0 → 1
+                  ↖ ↙
+                   2
+
+            -1 → 0 choose algorithm
+             0 → 1 sort
+             1 → 2 cancel
+             2 → 0 new sort
+        '''
         dprint('FUNCTION: btnSort_clicked')
-        dprint('FUNCTION: on_btnSort_clicked')
         # ready to start -> running
         if self.app_state == 0:
-            dprint('\tapp_state 0 → 1')
             self.sort_button_status(1)
             self.thread_update()
             globals.RET_FLAG = False
             self.sorter.start()
         # running -> finished
         elif self.app_state == 1:
-            dprint('\tapp_state 1 → 2')
             globals.RET_FLAG = True
             self.sort_button_status(2)
         # finished -> ready to start
         elif self.app_state == 2:
-            dprint('\tapp_state 2 → 0')
             self.scene.clear()
             self.columns_setup()
             self.sort_button_status(0)
@@ -178,6 +212,7 @@ class Widget(QtWidgets.QWidget):
 
     @QtCore.Slot()
     def on_comparsion(self, left, right):
+        '''change two different columns in the scene'''
         left_rect = self.col_items[left].rect()
         right_rect = self.col_items[right].rect()
         left_xpos = left_rect.left()
