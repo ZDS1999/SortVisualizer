@@ -318,10 +318,6 @@ class Ui_Widget(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout_4)
 
-        self.verticalSpacer_5 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Fixed)
-
-        self.verticalLayout.addItem(self.verticalSpacer_5)
-
 
         self.horizontalLayout.addWidget(self.frame)
 

@@ -19,9 +19,10 @@ class Widget(QtWidgets.QWidget):
         self.col_amount = 0
         self.col_heights = []
         self.col_items = []
+        self.algorithm_list = {}
         # (-1) - App started    (0) - App ready to sort
         # (1)  - App sorting    (2) - App sorted
-        self.app_state = 0  # here should be changed !!!!
+        self.app_state = -1
         self.comparisons = 0
         self.sort_delay = 0
         self.algorithm_key = 0
@@ -32,12 +33,17 @@ class Widget(QtWidgets.QWidget):
         self.ui.graphicsView.setScene(self.scene)
         self.ui.graphicsView.horizontalScrollBar().blockSignals(True) # avoid scrolling
         self.ui.graphicsView.verticalScrollBar().blockSignals(True)
-        self.columns_setup(1, 50)
+        self.columns_setup(1, 100)
+        for i in range(self.ui.listAlgorithms.count()):
+            item = self.ui.listAlgorithms.item(i)
+            item.setSizeHint(QtCore.QSize(item.sizeHint().width(), 40))
+            self.algorithm_list[item.text()] = i
 
         # signal connect
         self.ui.btnSort.clicked.connect(self.btnSort_clicked)
         self.ui.spinDelay.valueChanged.connect(self.spin_changed)
         self.ui.spinColAmount.valueChanged.connect(self.spin_changed)
+        self.ui.listAlgorithms.itemClicked.connect(self.list_clicked)
 
         # show widget
         self.show()
@@ -47,26 +53,19 @@ class Widget(QtWidgets.QWidget):
         self.scene.clear()
         self.col_heights.clear()
         self.col_items.clear()
-
         # copy delay, amount to class attribute
         self.sort_delay = ms
         self.col_amount = amount
-
         # compute width of all columns
         col_width = self.scene_width / amount
-
         # create heights for all columns in scene
         height_increment = self.scene_height / amount
         height = 0
         for i in range(amount):
             height += height_increment
             self.col_heights.append(height)
-
-        dprint('column number: {}'.format(len(self.col_heights)))
-
         # shuffle heights
         random.shuffle(self.col_heights)
-
         # apply columns to scene
         xpos = 0
         for i in range(amount):
@@ -99,49 +98,75 @@ class Widget(QtWidgets.QWidget):
         self.sorter.signals.sig_array_access.connect(self.ui.labArrayAccesses.setNum)
 
     def sort_button_status(self, state):
+        dprint('FUNCTION: sort_button_status')
+        dprint('\tstate = {}'.format(self.app_state))
         style = ''
         btn_text = ''
-        if self.app_state == 0:
-            self.ui.spinColAmounts.setEnabled(False)
-            self.ui.spinDelay.setEnabled(False)
+        if state == 0:
+            self.ui.spinColAmount.setEnabled(True)
+            self.ui.spinDelay.setEnabled(True)
             btn_text = 'sort'
             style = 'background-color: rgba(255,0,68,255); color: #fff'
-        elif self.app_state == 1:
-            self.ui.spinColAmounts.setEnabled(True)
-            self.ui.spinDelay.setEnabled(True)
+        elif state == 1:
+            self.ui.spinColAmount.setEnabled(False)
+            self.ui.spinDelay.setEnabled(False)
             btn_text = 'cancel'
             style = 'background-color: #000; color: #fff'
-        elif self.app_state == 2:
+        elif state == 2:
             btn_text = 'new sort'
             style = 'background-color: rgba(85,0,255,255); color: #fff'
         self.app_state = state
+        dprint('\tstate → {}'.format(self.app_state))
         self.ui.btnSort.setText(btn_text)
         self.ui.btnSort.setStyleSheet(style)
+
+    @QtCore.Slot()
+    def list_clicked(self, item):
+        dprint('FUNCTION: list_clicked')
+        dprint('\ttext: {}'.format(item.text()))
+        dprint('\tapp_state = {}'.format(self.app_state))
+        if self.app_state == -1:
+            self.ui.btnSort.setEnabled(True)
+            self.ui.spinColAmount.setEnabled(True)
+            self.ui.spinDelay.setEnabled(True)
+
+            self.app_state = 0
+            self.sort_button_status(self.app_state)
+
+        if self.app_state == 0:
+            text = item.text()
+            algorithm_key = self.algorithm_list[text]
+            self.ui.labSortWith.setText(text)
 
     @QtCore.Slot()
     def spin_changed(self):
         if self.app_state == 0:
             ms = self.ui.spinDelay.value()
-            amount = self.ui.spinColAmounts.value()
+            amount = self.ui.spinColAmount.value()
             self.columns_setup(ms, amount)
 
-    @QtCore.Slot()
+
     def btnSort_clicked(self):
+        dprint('FUNCTION: btnSort_clicked')
+        dprint('FUNCTION: on_btnSort_clicked')
+        # ready to start -> running
         if self.app_state == 0:
-            dprint('app state transits from 0 to 1')
+            dprint('\tapp_state 0 → 1')
             self.sort_button_status(1)
-            self.comparisons = 0
             self.thread_update(self.sort_delay, self.algorithm_key)
+            self.thread_update()
             self.sorter.start()
+        # running -> finished (terminate)
         elif self.app_state == 1:
-            dprint('app state transits from 1 to 2')
+            dprint('\tapp_state 1 → 2')
             self.sorter.terminate()
             self.sort_button_status(2)
+        # finished -> ready to start
         elif self.app_state == 2:
-            dprint('app state transits from 2 to 0')
+            dprint('\tapp_state 2 → 0')
             self.scene.clear()
-            self.col_heights.clear()
             self.columns_setup(self.sort_delay, self.col_amount)
+            self.columns_setup()
             self.sort_button_status(0)
         else:
             print('app state not found')
