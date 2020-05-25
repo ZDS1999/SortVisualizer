@@ -16,7 +16,6 @@ class Widget(QtWidgets.QWidget):
         self.scene = QtWidgets.QGraphicsScene(self)
         self.scene_height = self.ui.graphicsView.height()
         self.scene_width = self.ui.graphicsView.width()
-        self.col_amount = 0
         self.col_heights = []
         self.col_items = []
         self.algorithm_list = {}
@@ -24,6 +23,7 @@ class Widget(QtWidgets.QWidget):
         # (1)  - App sorting    (2) - App sorted
         self.app_state = -1
         self.comparisons = 0
+        self.col_amount = 100
         self.sort_delay = 0
         self.algorithm_key = 0
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
@@ -33,7 +33,7 @@ class Widget(QtWidgets.QWidget):
         self.ui.graphicsView.setScene(self.scene)
         self.ui.graphicsView.horizontalScrollBar().blockSignals(True) # avoid scrolling
         self.ui.graphicsView.verticalScrollBar().blockSignals(True)
-        self.columns_setup(1, 100)
+        self.columns_setup()
         for i in range(self.ui.listAlgorithms.count()):
             item = self.ui.listAlgorithms.item(i)
             item.setSizeHint(QtCore.QSize(item.sizeHint().width(), 40))
@@ -41,34 +41,31 @@ class Widget(QtWidgets.QWidget):
 
         # signal connect
         self.ui.btnSort.clicked.connect(self.btnSort_clicked)
-        self.ui.spinDelay.valueChanged.connect(self.spin_changed)
-        self.ui.spinColAmount.valueChanged.connect(self.spin_changed)
+        self.ui.spinDelay.valueChanged.connect(self.spinDelay_changed)
+        self.ui.spinColAmount.valueChanged.connect(self.spinAmount_changed)
         self.ui.listAlgorithms.itemClicked.connect(self.list_clicked)
 
         # show widget
         self.show()
 
-    def columns_setup(self, ms, amount):
+    def columns_setup(self):
         # reset columns
         self.scene.clear()
         self.col_heights.clear()
         self.col_items.clear()
-        # copy delay, amount to class attribute
-        self.sort_delay = ms
-        self.col_amount = amount
         # compute width of all columns
-        col_width = self.scene_width / amount
+        col_width = self.scene_width / self.col_amount
         # create heights for all columns in scene
-        height_increment = self.scene_height / amount
+        height_increment = self.scene_height / self.col_amount
         height = 0
-        for i in range(amount):
+        for i in range(self.col_amount):
             height += height_increment
             self.col_heights.append(height)
         # shuffle heights
         random.shuffle(self.col_heights)
         # apply columns to scene
         xpos = 0
-        for i in range(amount):
+        for i in range(self.col_amount):
             ypos = self.scene_height - self.col_heights[i]
             rect_item = QtWidgets.QGraphicsRectItem()
             # column location in scene
@@ -76,9 +73,9 @@ class Widget(QtWidgets.QWidget):
             # column background color
             rect_item.setBrush(QtGui.QBrush(QtGui.Qt.red))
             # column border width
-            if amount <= 200:
+            if self.col_amount <= 200:
                 rect_item.setPen(QtGui.QPen(QtGui.Qt.black, 2))
-            elif 200 < amount <= 300:
+            elif 200 < self.col_amount <= 300:
                 rect_item.setPen(QtGui.QPen(QtGui.Qt.black, 1))
             else:
                 rect_item.setPen(QtGui.Qt.NoPen)
@@ -88,10 +85,8 @@ class Widget(QtWidgets.QWidget):
             # update xpos
             xpos += col_width
 
-        self.thread_update(ms, self.algorithm_key)
-
-    def thread_update(self, ms, sort_with):
-        self.sorter = Sorter(sort_with, ms, self.col_amount, self.col_heights)
+    def thread_update(self):
+        self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
         self.sorter.signals.sig_compare.connect(self.on_comparsion)
         self.sorter.signals.sig_sort_done.connect(self.sort_done)
         self.sorter.signals.sig_change_button_status.connect(self.sort_button_status)
@@ -139,11 +134,15 @@ class Widget(QtWidgets.QWidget):
             self.ui.labSortWith.setText(text)
 
     @QtCore.Slot()
-    def spin_changed(self):
+    def spinAmount_changed(self):
         if self.app_state == 0:
-            ms = self.ui.spinDelay.value()
-            amount = self.ui.spinColAmount.value()
-            self.columns_setup(ms, amount)
+            self.col_amount = self.ui.spinColAmount.value()
+            self.columns_setup()
+
+    def spinDelay_changed(self):
+        if self.app_state == 0:
+            self.sort_delay = self.ui.spinDelay.value()
+            self.thread_update()
 
 
     def btnSort_clicked(self):
@@ -153,7 +152,7 @@ class Widget(QtWidgets.QWidget):
         if self.app_state == 0:
             dprint('\tapp_state 0 → 1')
             self.sort_button_status(1)
-            self.thread_update(self.sort_delay, self.algorithm_key)
+            self.thread_update()
             self.thread_update()
             self.sorter.start()
         # running -> finished (terminate)
@@ -165,7 +164,7 @@ class Widget(QtWidgets.QWidget):
         elif self.app_state == 2:
             dprint('\tapp_state 2 → 0')
             self.scene.clear()
-            self.columns_setup(self.sort_delay, self.col_amount)
+            self.columns_setup()
             self.columns_setup()
             self.sort_button_status(0)
         else:
