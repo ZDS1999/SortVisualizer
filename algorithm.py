@@ -7,10 +7,11 @@ INFINITY = 0x40000
 
 
 class SorterSignals(QObject):
-    sig_swap = Signal(int, int)
-    sig_sort_done = Signal(int)
     sig_compare = Signal(int)
     sig_time = Signal(float)
+    sig_swap = Signal(int, int)
+    sig_adjust = Signal(int, int)
+    sig_sort_done = Signal(int)
     sig_change_button_status = Signal(int)
 
 
@@ -44,9 +45,11 @@ class Sorter(QThread):
         else:
             print('should never come here: algorithm not exists')
         end_time = time.time()
+        self.signals.sig_time.emit(end_time - start_time)
         if globals.RET_FLAG == False:
             self.sorted()
-            self.signals.sig_time.emit(end_time - start_time)
+
+    # FUCTIONS THAT SEND SINGALS
 
     def sorted(self):
         for index in range(self.amount):
@@ -58,32 +61,41 @@ class Sorter(QThread):
         self.cols[left], self.cols[right] = self.cols[right], self.cols[left]
         self.signals.sig_swap.emit(left, right)
 
-    def compare_num(self):
-        self.comparisons += 1
+    def adjust(self, pos, height):
+        self.signals.sig_adjust.emit(pos, height)
+
+    def add_comparisons(self, addition):
+        self.comparisons += addition
         self.signals.sig_compare.emit(self.comparisons)
+
+    # SORT FUNCTIONS
 
     def bubble_sort(self):
         for i in range(self.amount):
             for j in range(self.amount - 1 - i):
                 if globals.RET_FLAG == True:
                     return
+                self.add_comparisons(1)
                 if self.cols[j] > self.cols[j+1]:
                     self.swap(j, j+1)
-                # access incremnt by 1 after every comparsion
-                self.compare_num()
                 self.msleep(self.sort_delay)
 
     def select_sort(self):
+        '''
+            LHS     RHS
+           sorted  unsorted
+        find the minimun num in rhs and swap it to the next lhs location
+        '''
         for i in range(self.amount):
             min_val = INFINITY
             min_pos = i
             for j in range(i, self.amount):
                 if globals.RET_FLAG == True:
                     return
+                self.add_comparisons(1)
                 if self.cols[j] < min_val:
                     min_val = self.cols[j]
                     min_pos = j
-                self.compare_num()
                 self.msleep(self.sort_delay)
             self.swap(i, min_pos)
 
@@ -92,9 +104,14 @@ class Sorter(QThread):
             temp = self.cols[i]
             j = i
             while j >= 0 and j - 1 >= 0 and temp < self.cols[j-1]:
+                self.add_comparisons(1)
                 self.cols[j] = self.cols[j-1]
+                self.adjust(j, self.cols[j-1])
+                self.msleep(self.sort_delay)
                 j -= 1
             self.cols[j] = temp
+            self.adjust(j, temp)
+            self.msleep(self.sort_delay)
 
     def shell_sort(self):
         gap = self.amount // 2
@@ -103,9 +120,14 @@ class Sorter(QThread):
                 temp = self.cols[i]
                 j = i
                 while j >= 0 and j - gap >= 0 and temp < self.cols[j-gap]:
+                    self.add_comparisons(1)
                     self.cols[j] = self.cols[j-gap]
+                    self.adjust(j, self.cols[j-gap])
+                    self.msleep(self.sort_delay)
                     j -= gap
                 self.cols[j] = temp
+                self.adjust(j, temp)
+                self.msleep(self.sort_delay)
             gap = gap // 2
 
     def merge_sort(self):
@@ -121,6 +143,7 @@ class Sorter(QThread):
             merge(reg, nums, start2, end2)
             k = start
             while start1 <= end1 and start2 <= end2:
+                self.add_comparisons(1)
                 if nums[start1] < nums[start2]:
                     reg[k] = nums[start1]
                     k += 1
@@ -139,6 +162,8 @@ class Sorter(QThread):
                 start2 += 1
             for k in range(start, end+1):
                 nums[k] = reg[k]
+                self.adjust(k, reg[k])
+                self.msleep(self.sort_delay)
 
         reg = [0 for i in range(self.amount)]
         merge(reg, self.cols, 0, self.amount-1)
@@ -149,14 +174,18 @@ class Sorter(QThread):
             r = end
             while l < r:
                 while l < r and nums[r] >= nums[l]:
+                    self.add_comparisons(1)
                     r -= 1
                 if l < r:
                     self.swap(l, r)
+                    self.msleep(self.sort_delay)
                     l += 1
                 while l < r and nums[l] <= nums[r]:
+                    self.add_comparisons(1)
                     l += 1
                 if l < r:
                     self.swap(l, r)
+                    self.msleep(self.sort_delay)
                     r -= 1
             return l
 
@@ -180,10 +209,13 @@ class Sorter(QThread):
                 return
             # if right child < left child
             if ri <= length and self.cols[ri] > self.cols[li]:
+                self.add_comparisons(1)
                 cmax = ri
             # if parent and child node should be exchanged, then continue to heapify
             if self.cols[cmax] > self.cols[index]:
+                self.add_comparisons(1)
                 self.swap(cmax, index)
+                self.msleep(self.sort_delay)
                 max_heapify(cmax, length)
 
         '''
@@ -204,6 +236,7 @@ class Sorter(QThread):
         '''
         for i in range(length, 0, -1):
             self.swap(0, i)
+            self.msleep(self.sort_delay)
             max_heapify(0, i-1)
 
 

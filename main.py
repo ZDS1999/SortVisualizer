@@ -24,10 +24,9 @@ class Widget(QtWidgets.QWidget):
         # (-1) - App started    (0) - App ready to sort
         # (1)  - App sorting    (2) - App sorted
         self.app_state = -1
-        self.comparisons = 0
             # sort control
         self.col_amount = 100
-        self.sort_delay = 0
+        self.sort_delay = 1
         self.algorithm_key = 0
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
 
@@ -64,7 +63,6 @@ class Widget(QtWidgets.QWidget):
         # reset label
         self.ui.labTime.setText('0')
         self.ui.labComparisons.setText('0')
-        self.comparisons = 0
         # reset columns
         self.scene.clear()
         self.col_heights.clear()
@@ -107,9 +105,10 @@ class Widget(QtWidgets.QWidget):
         function: create a new thread and render it with current state
         '''
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
-        self.sorter.comparisons = 0
         # swap columns in scene
         self.sorter.signals.sig_swap.connect(self.swap_columns)
+        # adjust certain column height
+        self.sorter.signals.sig_adjust.connect(self.adjust_column)
         # show done animation
         self.sorter.signals.sig_sort_done.connect(self.sort_done)
         # change lab comparisons num
@@ -139,6 +138,9 @@ class Widget(QtWidgets.QWidget):
             dprint('\talgorithm {} → {}'.format(self.algorithm_key, self.algorithm_list[text]))
             self.algorithm_key = self.algorithm_list[text]
             self.ui.labSortWith.setText(text)
+        # test
+        # self.adjust_column(1, self.scene_height)
+        # self.swap_columns(1, 2)
 
     @QtCore.Slot()
     def spinAmount_changed(self):
@@ -157,6 +159,7 @@ class Widget(QtWidgets.QWidget):
             dprint('\tdelay {} → {}'.format(self.sort_delay, self.ui.spinDelay.value()))
             self.sort_delay = self.ui.spinDelay.value()
 
+    @QtCore.Slot()
     def sort_button_status(self, state):
         '''
             transit to a new state and set labels and button
@@ -168,11 +171,13 @@ class Widget(QtWidgets.QWidget):
         if state == 0:
             self.ui.spinColAmount.setEnabled(True)
             self.ui.spinDelay.setEnabled(True)
+            self.ui.listAlgorithms.setEnabled(True)
             btn_text = 'sort'
             style = 'background-color: rgba(255,0,68,255); color: #fff'
         elif state == 1:
             self.ui.spinColAmount.setEnabled(False)
             self.ui.spinDelay.setEnabled(False)
+            self.ui.listAlgorithms.setEnabled(False)
             btn_text = 'cancel'
             style = 'background-color: #000; color: #fff'
         elif state == 2:
@@ -231,6 +236,15 @@ class Widget(QtWidgets.QWidget):
         self.col_items[right].setRect(right_rect)
 
         self.col_items[left], self.col_items[right] = self.col_items[right], self.col_items[left]
+
+    @QtCore.Slot()
+    def adjust_column(self, pos, height):
+        '''adjust the height of the col_items[pos] to height'''
+        rect = self.col_items[pos].rect()
+        # only need to adjust height and ypos
+        rect.setY(self.scene_height - height)
+        rect.setHeight(height)
+        self.col_items[pos].setRect(rect)
 
     @QtCore.Slot()
     def sort_done(self, n):
