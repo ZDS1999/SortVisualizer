@@ -1,14 +1,16 @@
 from globals import SortWith
 import globals
+import time
 from PySide2.QtCore import QThread, QObject, Signal
 
 INFINITY = 0x40000
 
 
 class SorterSignals(QObject):
-    sig_compare = Signal(int, int)
+    sig_swap = Signal(int, int)
     sig_sort_done = Signal(int)
-    sig_array_access = Signal(int)
+    sig_compare = Signal(int)
+    sig_time = Signal(float)
     sig_change_button_status = Signal(int)
 
 
@@ -21,9 +23,10 @@ class Sorter(QThread):
         self.amount = amount
         self.cols = col_heights
         self.signals = SorterSignals()
-        self.access_count = 0
+        self.comparisons = 0
 
     def run(self):
+        start_time = time.time()
         if self.sort_with == SortWith.BUBBLE.value:
             self.bubble_sort()
         elif self.sort_with == SortWith.SELECT.value:
@@ -40,8 +43,10 @@ class Sorter(QThread):
             self.heap_sort()
         else:
             print('should never come here: algorithm not exists')
+        end_time = time.time()
         if globals.RET_FLAG == False:
             self.sorted()
+            self.signals.sig_time.emit(end_time - start_time)
 
     def sorted(self):
         for index in range(self.amount):
@@ -51,11 +56,11 @@ class Sorter(QThread):
 
     def swap(self, left, right):
         self.cols[left], self.cols[right] = self.cols[right], self.cols[left]
-        self.signals.sig_compare.emit(left, right)
+        self.signals.sig_swap.emit(left, right)
 
-    def access_array(self):
-        self.access_count += 1
-        self.signals.sig_array_access.emit(self.access_count)
+    def compare_num(self):
+        self.comparisons += 1
+        self.signals.sig_compare.emit(self.comparisons)
 
     def bubble_sort(self):
         for i in range(self.amount):
@@ -64,7 +69,8 @@ class Sorter(QThread):
                     return
                 if self.cols[j] > self.cols[j+1]:
                     self.swap(j, j+1)
-                self.access_array()
+                # access incremnt by 1 after every comparsion
+                self.compare_num()
                 self.msleep(self.sort_delay)
 
     def select_sort(self):
@@ -72,9 +78,12 @@ class Sorter(QThread):
             min_val = INFINITY
             min_pos = i
             for j in range(i, self.amount):
+                if globals.RET_FLAG == True:
+                    return
                 if self.cols[j] < min_val:
                     min_val = self.cols[j]
                     min_pos = j
+                self.compare_num()
                 self.msleep(self.sort_delay)
             self.swap(i, min_pos)
 

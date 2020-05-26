@@ -133,17 +133,17 @@ class Ui_Widget(object):
         self.horizontalLayout_5.setSpacing(6)
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
         self.horizontalLayout_5.setSizeConstraint(QLayout.SetMinimumSize)
-        self.labAccessHead = QLabel(self.frame)
-        self.labAccessHead.setObjectName(u"labAccessHead")
-        self.labAccessHead.setStyleSheet(u"")
+        self.labCompareHead = QLabel(self.frame)
+        self.labCompareHead.setObjectName(u"labCompareHead")
+        self.labCompareHead.setStyleSheet(u"")
 
-        self.horizontalLayout_5.addWidget(self.labAccessHead)
+        self.horizontalLayout_5.addWidget(self.labCompareHead)
 
-        self.labArrayAccesses = QLabel(self.frame)
-        self.labArrayAccesses.setObjectName(u"labArrayAccesses")
-        self.labArrayAccesses.setStyleSheet(u"color: rgba(0, 0, 0, 150);")
+        self.labComparisons = QLabel(self.frame)
+        self.labComparisons.setObjectName(u"labComparisons")
+        self.labComparisons.setStyleSheet(u"color: rgba(0, 0, 0, 150);")
 
-        self.horizontalLayout_5.addWidget(self.labArrayAccesses)
+        self.horizontalLayout_5.addWidget(self.labComparisons)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_5)
@@ -152,17 +152,17 @@ class Ui_Widget(object):
         self.horizontalLayout_3.setSpacing(6)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setSizeConstraint(QLayout.SetMinimumSize)
-        self.labComparisonHead = QLabel(self.frame)
-        self.labComparisonHead.setObjectName(u"labComparisonHead")
-        self.labComparisonHead.setStyleSheet(u"")
+        self.labTimeHead = QLabel(self.frame)
+        self.labTimeHead.setObjectName(u"labTimeHead")
+        self.labTimeHead.setStyleSheet(u"")
 
-        self.horizontalLayout_3.addWidget(self.labComparisonHead)
+        self.horizontalLayout_3.addWidget(self.labTimeHead)
 
-        self.labComparisons = QLabel(self.frame)
-        self.labComparisons.setObjectName(u"labComparisons")
-        self.labComparisons.setStyleSheet(u"color: rgba(0, 0, 0, 150);")
+        self.labTime = QLabel(self.frame)
+        self.labTime.setObjectName(u"labTime")
+        self.labTime.setStyleSheet(u"color: rgba(0, 0, 0, 150);")
 
-        self.horizontalLayout_3.addWidget(self.labComparisons)
+        self.horizontalLayout_3.addWidget(self.labTime)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout_3)
@@ -336,10 +336,10 @@ class Ui_Widget(object):
 
     def retranslateUi(self, Widget):
         Widget.setWindowTitle(QCoreApplication.translate("Widget", u"Widget", None))
-        self.labAccessHead.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Array Accesses:</p></body></html>", None))
-        self.labArrayAccesses.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>0</p></body></html>", None))
-        self.labComparisonHead.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Comparisions:</p></body></html>", None))
+        self.labCompareHead.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Comparisons:</p></body></html>", None))
         self.labComparisons.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>0</p></body></html>", None))
+        self.labTimeHead.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Elapsed Time:</p></body></html>", None))
+        self.labTime.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>0</p></body></html>", None))
         self.labSortWithHead.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Sorting with:</p></body></html>", None))
         self.labSortWith.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Select an algorithm..</p></body></html>", None))
         self.labAmountHead.setText(QCoreApplication.translate("Widget", u"<html><head/><body><p>Amount of columns</p></body></html>", None))

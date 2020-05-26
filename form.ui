@@ -169,17 +169,17 @@ background-color:rgb(31, 31, 31)</string>
            <enum>QLayout::SetMinimumSize</enum>
           </property>
           <item>
-           <widget class="QLabel" name="labAccessHead">
+           <widget class="QLabel" name="labCompareHead">
             <property name="styleSheet">
              <string notr="true"/>
             </property>
             <property name="text">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Array Accesses:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Comparisons:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="labArrayAccesses">
+           <widget class="QLabel" name="labComparisons">
             <property name="styleSheet">
              <string notr="true">color: rgba(0, 0, 0, 150);</string>
             </property>
@@ -196,17 +196,17 @@ background-color:rgb(31, 31, 31)</string>
            <enum>QLayout::SetMinimumSize</enum>
           </property>
           <item>
-           <widget class="QLabel" name="labComparisonHead">
+           <widget class="QLabel" name="labTimeHead">
             <property name="styleSheet">
              <string notr="true"/>
             </property>
             <property name="text">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Comparisions:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elapsed Time:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="labComparisons">
+           <widget class="QLabel" name="labTime">
             <property name="styleSheet">
              <string notr="true">color: rgba(0, 0, 0, 150);</string>
             </property>

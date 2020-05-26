@@ -62,7 +62,7 @@ class Widget(QtWidgets.QWidget):
             2. reset scene and render it again with correspoing variables
         '''
         # reset label
-        self.ui.labArrayAccesses.setText('0')
+        self.ui.labTime.setText('0')
         self.ui.labComparisons.setText('0')
         self.comparisons = 0
         # reset columns
@@ -107,11 +107,17 @@ class Widget(QtWidgets.QWidget):
         function: create a new thread and render it with current state
         '''
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
-        self.sorter.access_count = 0
-        self.sorter.signals.sig_compare.connect(self.on_comparsion)
+        self.sorter.comparisons = 0
+        # swap columns in scene
+        self.sorter.signals.sig_swap.connect(self.swap_columns)
+        # show done animation
         self.sorter.signals.sig_sort_done.connect(self.sort_done)
+        # change lab comparisons num
+        self.sorter.signals.sig_compare.connect(self.ui.labComparisons.setNum)
+        # change app_state when finishing
         self.sorter.signals.sig_change_button_status.connect(self.sort_button_status)
-        self.sorter.signals.sig_array_access.connect(self.ui.labArrayAccesses.setNum)
+        # change lab time when finishing
+        self.sorter.signals.sig_time.connect(self.ui.labTime.setNum)
 
     @QtCore.Slot()
     def list_clicked(self, item):
@@ -139,7 +145,7 @@ class Widget(QtWidgets.QWidget):
         '''re render the scene'''
         dprint('FUNCTION: spinAmount_changed')
         if self.app_state == 0:
-            dprint('amount {} → {}'.format(self.col_amount, self.ui.spinColAmount.value()))
+            dprint('\tamount {} → {}'.format(self.col_amount, self.ui.spinColAmount.value()))
             self.col_amount = self.ui.spinColAmount.value()
             self.columns_setup()
 
@@ -148,7 +154,7 @@ class Widget(QtWidgets.QWidget):
         '''re render the sorter(thread)'''
         dprint('FUNCTION: spinDelay_changed')
         if self.app_state == 0:
-            dprint('delay {} → {}'.format(self.sort_delay, self.ui.spinDelay.value()))
+            dprint('\tdelay {} → {}'.format(self.sort_delay, self.ui.spinDelay.value()))
             self.sort_delay = self.ui.spinDelay.value()
 
     def sort_button_status(self, state):
@@ -211,7 +217,7 @@ class Widget(QtWidgets.QWidget):
             sys.exit(1)
 
     @QtCore.Slot()
-    def on_comparsion(self, left, right):
+    def swap_columns(self, left, right):
         '''change two different columns in the scene'''
         left_rect = self.col_items[left].rect()
         right_rect = self.col_items[right].rect()
@@ -225,8 +231,6 @@ class Widget(QtWidgets.QWidget):
         self.col_items[right].setRect(right_rect)
 
         self.col_items[left], self.col_items[right] = self.col_items[right], self.col_items[left]
-        self.comparisons += 1
-        self.ui.labComparisons.setNum(self.comparisons)
 
     @QtCore.Slot()
     def sort_done(self, n):
