@@ -6,7 +6,7 @@ a qt-python project to visualize the popular sorting algorithm
 
 #### Screenshot
 
-![screenshot](./peek.gif "screenshot")
+![screenshot](./screenshot/peek.gif "screenshot")
 
 #### Prerequisite
 

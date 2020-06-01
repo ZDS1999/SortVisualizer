@@ -31,10 +31,13 @@ class Widget(QtWidgets.QWidget):
         self.sorter = Sorter(self.algorithm_key, self.sort_delay, self.col_amount, self.col_heights)
 
         # view settings
+        self.setWindowTitle('Sort Visualizer')
         self.setFixedSize(self.width(), self.height())
         self.ui.graphicsView.setScene(self.scene)
         self.ui.graphicsView.horizontalScrollBar().blockSignals(True) # avoid scrolling
         self.ui.graphicsView.verticalScrollBar().blockSignals(True)
+        self.ui.spinDelay.setDisabled(True)
+        self.ui.spinColAmount.setDisabled(True)
         self.columns_setup()
         for i in range(self.ui.listAlgorithms.count()):
             item = self.ui.listAlgorithms.item(i)
