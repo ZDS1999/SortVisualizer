@@ -169,34 +169,38 @@ class Sorter(QThread):
         merge(reg, self.cols, 0, self.amount-1)
             
     def quick_sort(self):
-        def partition(nums, start, end):
-            l = start
-            r = end
-            while l < r:
-                while l < r and nums[r] >= nums[l]:
-                    self.add_comparisons(1)
-                    r -= 1
-                if l < r:
-                    self.swap(l, r)
-                    self.msleep(self.sort_delay)
-                    l += 1
-                while l < r and nums[l] <= nums[r]:
-                    self.add_comparisons(1)
-                    l += 1
-                if l < r:
-                    self.swap(l, r)
-                    self.msleep(self.sort_delay)
-                    r -= 1
-            return l
-
-        def quick(nums, start, end):
+        def sort(nums, start, end):
             if start >= end:
                 return
-            pivot = partition(nums, start, end)
-            quick(nums, start, pivot-1)
-            quick(nums, pivot+1, end)
+            l = start
+            r = end
+            temp = nums[l]
+            while l < r:
+                while l < r and nums[r] >= temp:
+                    self.add_comparisons(1)
+                    r -= 1
+                if l < r:
+                    # self.swap(l, r)
+                    self.cols[l] = self.cols[r]
+                    self.adjust(l, self.cols[r])
+                    self.msleep(self.sort_delay)
+                    l += 1
+                while l < r and nums[l] <= temp:
+                    self.add_comparisons(1)
+                    l += 1
+                if l < r:
+                    # self.swap(l, r)
+                    self.cols[r] = self.cols[l]
+                    self.adjust(r, self.cols[l])
+                    self.msleep(self.sort_delay)
+                    r -= 1
+            pivot = l
+            self.cols[pivot] = temp
+            self.adjust(pivot, temp)
+            sort(nums, start, pivot-1)
+            sort(nums, pivot+1, end)
 
-        quick(self.cols, 0, self.amount-1)
+        sort(self.cols, 0, self.amount-1)
 
 
     def heap_sort(self):
