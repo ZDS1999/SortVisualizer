@@ -104,6 +104,8 @@ class Sorter(QThread):
             temp = self.cols[i]
             j = i
             while j >= 0 and j - 1 >= 0 and temp < self.cols[j-1]:
+                if globals.RET_FLAG == True:
+                    return
                 self.add_comparisons(1)
                 self.cols[j] = self.cols[j-1]
                 self.adjust(j, self.cols[j-1])
@@ -120,6 +122,8 @@ class Sorter(QThread):
                 temp = self.cols[i]
                 j = i
                 while j >= 0 and j - gap >= 0 and temp < self.cols[j-gap]:
+                    if globals.RET_FLAG == True:
+                        return
                     self.add_comparisons(1)
                     self.cols[j] = self.cols[j-gap]
                     self.adjust(j, self.cols[j-gap])
@@ -133,6 +137,8 @@ class Sorter(QThread):
     def merge_sort(self):
         def merge(reg, nums, start, end):
             if start >= end:
+                return
+            if globals.RET_FLAG == True:
                 return
             mid = (start + end) // 2
             start1 = start
@@ -161,6 +167,8 @@ class Sorter(QThread):
                 k += 1
                 start2 += 1
             for k in range(start, end+1):
+                if globals.RET_FLAG == True:
+                    return
                 nums[k] = reg[k]
                 self.adjust(k, reg[k])
                 self.msleep(self.sort_delay)
@@ -171,6 +179,8 @@ class Sorter(QThread):
     def quick_sort(self):
         def sort(nums, start, end):
             if start >= end:
+                return
+            if globals.RET_FLAG == True:
                 return
             l = start
             r = end
@@ -239,6 +249,8 @@ class Sorter(QThread):
         for length-1 times
         '''
         for i in range(length, 0, -1):
+            if globals.RET_FLAG == True:
+                return
             self.swap(0, i)
             self.msleep(self.sort_delay)
             max_heapify(0, i-1)
@@ -249,9 +261,10 @@ if __name__ == '__main__':
     import random
     from copy import deepcopy
     nums = []
-    for i in range(8):
+    amount = 10
+    for i in range(amount):
         nums.append(random.randint(1, 100))
-    sorter = Sorter(0, 0, 8, nums)
+    sorter = Sorter(0, 0, amount, nums)
     # bubble_sort
     print('bubble_sort')
     print(nums)
